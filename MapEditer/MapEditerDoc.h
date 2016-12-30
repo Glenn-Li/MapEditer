@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "comlib.h"
+
 
 class CMapEditerDoc : public CDocument
 {
@@ -14,9 +16,16 @@ protected: // 仅从序列化创建
 
 // 特性
 public:
+	CString MapFileName;
+	int MapLength;
+	int MapHeigth;
+	CList <MonsterInfo, MonsterInfo&> LMonsterInfo;
 
 // 操作
 public:
+	int GetMapLength();
+	void GetMonstersInfo();
+	afx_msg LRESULT OnOpenNewDoc(WPARAM wParam, LPARAM lParam);
 
 // 重写
 public:

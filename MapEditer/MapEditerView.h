@@ -14,6 +14,8 @@ protected: // 仅从序列化创建
 // 特性
 public:
 	CMapEditerDoc* GetDocument() const;
+// 	int MapLength;
+// 	int MapHeigth;
 
 // 操作
 public:
@@ -42,13 +44,11 @@ protected:
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	DECLARE_MESSAGE_MAP()
 
-public:
-	int MapLength;
-	int MapHeigth;
-
 private:
-	void DrawGrid(CDC* pDC);
-	void CMapEditerView::DisplayMonsterInfo(CDC* pDC);
+	void DrawGrid(CDC* pDC, CMapEditerDoc* pDoc);
+	void CMapEditerView::DisplayMonsterInfo(CDC* pDC, CMapEditerDoc* pDoc);
+public:
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };
 
 #ifndef _DEBUG  // MapEditerView.cpp 中的调试版本

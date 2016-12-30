@@ -9,6 +9,7 @@
 #include "MapEditer.h"
 #endif
 
+#include "comlib.h"
 #include "MapEditerDoc.h"
 
 #include <propkey.h>
@@ -22,6 +23,7 @@
 IMPLEMENT_DYNCREATE(CMapEditerDoc, CDocument)
 
 BEGIN_MESSAGE_MAP(CMapEditerDoc, CDocument)
+	//ON_MESSAGE(WM_OPENDOC, OnOpenNewDoc)
 END_MESSAGE_MAP()
 
 
@@ -30,7 +32,7 @@ END_MESSAGE_MAP()
 CMapEditerDoc::CMapEditerDoc()
 {
 	// TODO:  在此添加一次性构造代码
-
+	MapFileName = ".\\data\\LEVEL001.BIN";
 }
 
 CMapEditerDoc::~CMapEditerDoc()
@@ -44,12 +46,13 @@ BOOL CMapEditerDoc::OnNewDocument()
 
 	// TODO:  在此添加重新初始化代码
 	// (SDI 文档将重用该文档)
+	MapLength = GetMapLength() * 16;
+	MapHeigth = 55 * 16;
+
+	GetMonstersInfo();
 
 	return TRUE;
 }
-
-
-
 
 // CMapEditerDoc 序列化
 
@@ -133,5 +136,98 @@ void CMapEditerDoc::Dump(CDumpContext& dc) const
 }
 #endif //_DEBUG
 
+int CMapEditerDoc::GetMapLength()
+{
+	CString strPathName;
+	struct MapWrdHead sMapWrdHead;
+	int MapLength = 0;
+	int ret = 0;
+
+	strPathName = MapFileName;
+	strPathName.Replace(_T(".BIN"), _T(".WRD"));
+	//检查文件是否存在
+	DWORD dwRe = GetFileAttributes(strPathName);
+	if (dwRe != (DWORD)-1)
+	{
+		//ShellExecute(NULL, NULL, strFilePath, NULL, NULL, SW_RESTORE); 
+	}
+	else
+	{
+		CString errormessage;
+		TRACE(strPathName + _T("文件不存在！"));
+		return 0;
+	}
+
+	CFile iFile(strPathName, CFile::modeRead | CFile::modeNoTruncate | CFile::shareDenyNone);
+	CArchive iar(&iFile, CArchive::load);
+
+	ret = sizeof(sMapWrdHead);
+	ret = iar.Read(&sMapWrdHead, sizeof(sMapWrdHead));
+	if (ret > 0)
+		MapLength = sMapWrdHead.MapLength;
+
+	iar.Close();
+	iFile.Close();
+
+	return MapLength;
+}
+
+
+void CMapEditerDoc::GetMonstersInfo()
+{
+	struct MonsterInfo TmpMonsterInfo;
+	char Head[16];
+	int ret = 0;
+
+	LMonsterInfo.RemoveAll();
+
+	//检查文件是否存在
+	DWORD dwRe = GetFileAttributes(MapFileName);
+	if (dwRe != (DWORD)-1)
+	{
+		//ShellExecute(NULL, NULL, strFilePath, NULL, NULL, SW_RESTORE); 
+	}
+	else
+	{
+		CString errormessage;
+		AfxMessageBox(MapFileName + " 文件不存在！");
+		return;
+	}
+
+	CFile iFile(MapFileName, CFile::modeRead | CFile::modeNoTruncate | CFile::shareDenyNone);
+	CArchive iar(&iFile, CArchive::load);
+
+	ret = sizeof(TmpMonsterInfo);
+	ret = iar.Read(Head, sizeof(Head));
+	for (; ret > 0;)
+	{
+		ret = iar.Read(&TmpMonsterInfo, sizeof(TmpMonsterInfo));
+		if (ret <= 0) break;
+
+		if (TmpMonsterInfo.Flag == 0)
+		{
+			LMonsterInfo.AddTail(TmpMonsterInfo);
+			//TRACE("X-%d,Y-%d\n", TmpMonsterInfo.X, TmpMonsterInfo.Y);
+		}
+
+	}
+
+	iar.Close();
+	iFile.Close();
+}
 
 // CMapEditerDoc 命令
+
+LRESULT CMapEditerDoc::OnOpenNewDoc(WPARAM wParam, LPARAM lParam)
+{
+	MapFileName = *((CString*)lParam);
+
+	MapLength = GetMapLength() * 16;
+	MapHeigth = 55 * 16;
+
+	GetMonstersInfo();
+
+	UpdateAllViews(NULL);
+
+	return 0;
+}
