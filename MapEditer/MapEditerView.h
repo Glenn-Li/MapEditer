@@ -49,6 +49,7 @@ private:
 	void CMapEditerView::DisplayMonsterInfo(CDC* pDC, CMapEditerDoc* pDoc);
 public:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 };
 
 #ifndef _DEBUG  // MapEditerView.cpp 中的调试版本

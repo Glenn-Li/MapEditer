@@ -42,6 +42,18 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CResourceViewBar 消息处理程序
 
+CMapEditerDoc* CPropertiesWnd::GetDocument()
+{
+	CMainFrame *frm = (CMainFrame*)::AfxGetMainWnd();
+	ASSERT(frm);
+	CDocument *pDoc = frm->GetActiveDocument();
+	ASSERT(pDoc);
+	ASSERT(pDoc->IsKindOf(RUNTIME_CLASS(CMapEditerDoc)));
+
+	return (CMapEditerDoc*)pDoc;
+}
+
+
 void CPropertiesWnd::AdjustLayout()
 {
 	if (GetSafeHwnd () == NULL || (AfxGetMainWnd() != NULL && AfxGetMainWnd()->IsIconic()))
@@ -76,8 +88,8 @@ int CPropertiesWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;      // 未能创建
 	}
 
-	m_wndObjectCombo.AddString(_T("应用程序"));
-	m_wndObjectCombo.AddString(_T("属性窗口"));
+	//m_wndObjectCombo.AddString(_T("应用程序"));
+	m_wndObjectCombo.AddString(_T("Monster属性"));
 	m_wndObjectCombo.SetCurSel(0);
 
 	CRect rectCombo;
@@ -120,7 +132,7 @@ void CPropertiesWnd::OnExpandAllProperties()
 	m_wndPropList.ExpandAll();
 }
 
-void CPropertiesWnd::OnUpdateExpandAllProperties(CCmdUI* /* pCmdUI */)
+void CPropertiesWnd::OnUpdateExpandAllProperties(CCmdUI* pCmdUI)
 {
 }
 
@@ -131,7 +143,17 @@ void CPropertiesWnd::OnSortProperties()
 
 void CPropertiesWnd::OnUpdateSortProperties(CCmdUI* pCmdUI)
 {
+	CMapEditerDoc *pDoc = GetDocument();
 	pCmdUI->SetCheck(m_wndPropList.IsAlphabeticMode());
+
+	if (!pDoc->PosSel)
+		return;
+
+	MonsterInfo m_MonsterInfo = pDoc->LMonsterInfo.GetNext(pDoc->PosSel);
+
+	UpdatePropList(&m_MonsterInfo);
+
+	pDoc->PosSel = NULL;
 }
 
 void CPropertiesWnd::OnProperties1()
@@ -157,41 +179,66 @@ void CPropertiesWnd::OnUpdateProperties2(CCmdUI* /*pCmdUI*/)
 void CPropertiesWnd::InitPropList()
 {
 	SetPropListFont();
+	CMFCPropertyGridProperty* pProp;
 
 	m_wndPropList.EnableHeaderCtrl(FALSE);
 	m_wndPropList.EnableDescriptionArea();
 	m_wndPropList.SetVSDotNetLook();
 	m_wndPropList.MarkModifiedProperties();
 
-	CMFCPropertyGridProperty* pGroup1 = new CMFCPropertyGridProperty(_T("外观"));
+	pGroupBase = new CMFCPropertyGridProperty(_T("基本"));
 
-	pGroup1->AddSubItem(new CMFCPropertyGridProperty(_T("三维外观"), (_variant_t) false, _T("指定窗口的字体不使用粗体，并且控件将使用三维边框")));
+	pGroupBase->AddSubItem(new CMFCPropertyGridProperty(_T("ID"), (_variant_t)250l, _T("怪物ID")));
+	pGroupBase->AddSubItem(new CMFCPropertyGridProperty(_T("X坐标"), (_variant_t)0l, _T("X坐标")));
+	pGroupBase->AddSubItem(new CMFCPropertyGridProperty(_T("Y坐标"), (_variant_t)0l, _T("Y坐标")));
 
-	CMFCPropertyGridProperty* pProp = new CMFCPropertyGridProperty(_T("边框"), _T("对话框外框"), _T("其中之一: “无”、“细”、“可调整大小”或“对话框外框”"));
-	pProp->AddOption(_T("无"));
-	pProp->AddOption(_T("细"));
-	pProp->AddOption(_T("可调整大小"));
-	pProp->AddOption(_T("对话框外框"));
-	pProp->AllowEdit(FALSE);
+// 	CMFCPropertyGridProperty* pProp = new CMFCPropertyGridProperty(_T("边框"), _T("对话框外框"), _T("其中之一: “无”、“细”、“可调整大小”或“对话框外框”"));
+// 	pProp->AddOption(_T("无"));
+// 	pProp->AddOption(_T("细"));
+// 	pProp->AddOption(_T("可调整大小"));
+// 	pProp->AddOption(_T("对话框外框"));
+// 	pProp->AllowEdit(FALSE);
+// 
+// 	pGroup1->AddSubItem(pProp);
+// 	pGroup1->AddSubItem(new CMFCPropertyGridProperty(_T("标题"), (_variant_t) _T("关于"), _T("指定窗口标题栏中显示的文本")));
 
-	pGroup1->AddSubItem(pProp);
-	pGroup1->AddSubItem(new CMFCPropertyGridProperty(_T("标题"), (_variant_t) _T("关于"), _T("指定窗口标题栏中显示的文本")));
+	m_wndPropList.AddProperty(pGroupBase);
 
-	m_wndPropList.AddProperty(pGroup1);
+	pGroupToMap = new CMFCPropertyGridProperty(_T("传送"), 0, FALSE);
 
-	CMFCPropertyGridProperty* pSize = new CMFCPropertyGridProperty(_T("窗口大小"), 0, TRUE);
+	pProp = new CMFCPropertyGridProperty(_T("传送到地图ID"), (_variant_t) 1l, _T("传送到地图ID"));
+	//pProp->EnableSpinControl(TRUE, 50, 300);
+	pGroupToMap->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty(_T("高度"), (_variant_t) 250l, _T("指定窗口的高度"));
-	pProp->EnableSpinControl(TRUE, 50, 300);
-	pSize->AddSubItem(pProp);
+	pProp = new CMFCPropertyGridProperty( _T("传送X坐标"), (_variant_t) 0l, _T("传送X坐标"));
+	pProp->EnableSpinControl(TRUE, 0, 55);
+	pGroupToMap->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("宽度"), (_variant_t) 150l, _T("指定窗口的宽度"));
-	pProp->EnableSpinControl(TRUE, 50, 200);
-	pSize->AddSubItem(pProp);
+	pProp = new CMFCPropertyGridProperty(_T("传送Y坐标"), (_variant_t)0l, _T("传送Y坐标"));
+	pProp->EnableSpinControl(TRUE, 0, 1000);
+	pGroupToMap->AddSubItem(pProp);
 
-	m_wndPropList.AddProperty(pSize);
+	pProp = new CMFCPropertyGridProperty(_T("商店传送ID"), (_variant_t)0l, _T("商店传送ID"));
+	//pProp->EnableSpinControl(TRUE, 50, 200);
+	pGroupToMap->AddSubItem(pProp);
 
-	CMFCPropertyGridProperty* pGroup2 = new CMFCPropertyGridProperty(_T("字体"));
+	m_wndPropList.AddProperty(pGroupToMap);
+
+
+	pGroupNPC = new CMFCPropertyGridProperty(_T("NPC"), 0, FALSE);
+
+	pProp = new CMFCPropertyGridProperty(_T("NPC ID"), (_variant_t)1l, _T("NPC ID"));
+	//pProp->EnableSpinControl(TRUE, 50, 300);
+	pGroupNPC->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty(_T("资源ID"), (_variant_t)0l, _T("资源ID"));
+	pProp->EnableSpinControl(TRUE, 0, 55);
+	pGroupNPC->AddSubItem(pProp);
+
+	m_wndPropList.AddProperty(pGroupNPC);
+
+	/*
+	CMFCPropertyGridProperty* pGroup2 = new CMFCPropertyGridProperty(_T("传送"));
 
 	LOGFONT lf;
 	CFont* font = CFont::FromHandle((HFONT) GetStockObject(DEFAULT_GUI_FONT));
@@ -235,6 +282,8 @@ void CPropertiesWnd::InitPropList()
 
 	pGroup4->Expand(FALSE);
 	m_wndPropList.AddProperty(pGroup4);
+
+	*/
 }
 
 void CPropertiesWnd::OnSetFocus(CWnd* pOldWnd)
@@ -269,4 +318,23 @@ void CPropertiesWnd::SetPropListFont()
 
 	m_wndPropList.SetFont(&m_fntPropList);
 	m_wndObjectCombo.SetFont(&m_fntPropList);
+}
+
+
+void CPropertiesWnd::UpdatePropList(MonsterInfo *pMonsterInfo)
+{
+	CMFCPropertyGridProperty* pProp;
+
+	pGroupBase->GetSubItem(0)->SetValue((_variant_t)(long)pMonsterInfo->Id);
+	pGroupBase->GetSubItem(1)->SetValue((_variant_t)(long)pMonsterInfo->X);
+	pGroupBase->GetSubItem(2)->SetValue((_variant_t)(long)pMonsterInfo->Y);
+
+
+	pGroupToMap->GetSubItem(0)->SetValue((_variant_t)(long)pMonsterInfo->ToMapId);
+	pGroupToMap->GetSubItem(1)->SetValue((_variant_t)(long)pMonsterInfo->ToMapX);
+	pGroupToMap->GetSubItem(2)->SetValue((_variant_t)(long)pMonsterInfo->ToMapY);
+	pGroupToMap->GetSubItem(3)->SetValue((_variant_t)(long)pMonsterInfo->ToShop);
+
+	pGroupNPC->GetSubItem(0)->SetValue((_variant_t)(long)pMonsterInfo->NpcTalkId);
+	pGroupNPC->GetSubItem(1)->SetValue((_variant_t)(long)pMonsterInfo->ResNameId);
 }

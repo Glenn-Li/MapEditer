@@ -26,6 +26,7 @@ BEGIN_MESSAGE_MAP(CMapEditerView, CScrollView)
 	ON_WM_CONTEXTMENU()
 	ON_WM_RBUTTONUP()
 	ON_WM_ERASEBKGND()
+	ON_WM_LBUTTONUP()
 END_MESSAGE_MAP()
 
 // CMapEditerView 构造/析构
@@ -128,11 +129,11 @@ void CMapEditerView::DrawGrid(CDC* pDC, CMapEditerDoc* pDoc)
 	//brush.CreateSolidBrush(RGB(125, 125, 125));
 	pDC->SelectObject(pen);
 	//pDC->SelectObject(brush);
-	for (int i = 0; i < MapHeigth; i += 16)
+	for (int i = 0; i < MapHeigth; i += MAP_SIZE_RATIO)
 	{
 		pDC->Rectangle(0, i, MapLength, i + 1);
 	}
-	for (int j = 0; j < MapLength; j += 16)
+	for (int j = 0; j < MapLength; j += MAP_SIZE_RATIO)
 	{
 		pDC->Rectangle(j, 0, j + 1, MapHeigth);
 	}
@@ -157,13 +158,13 @@ void CMapEditerView::DisplayMonsterInfo(CDC* pDC, CMapEditerDoc* pDoc)
 		CBrush brush;
 		brush.CreateSolidBrush(RGB(rgb, rgb, rgb));
 		pDC->SelectObject(brush);
-		int X = (int)(TmpMonsterInfo.X / 4);
-		int Y = (int)(TmpMonsterInfo.Y / 4);
-		pDC->Rectangle(X, Y, X+32, Y+32);
+		int X = (int)(TmpMonsterInfo.X / GRID_CELL_SIZE);
+		int Y = (int)(TmpMonsterInfo.Y / GRID_CELL_SIZE);
+		pDC->Rectangle(X, Y, X + MONSTER_SIZE, Y + MONSTER_SIZE);
 		DeleteObject(brush);
 
 		pDC->SetTextColor(RGB(0, 0, 0));
-		pDC->TextOutW(X+8, Y+8, nTos(TmpMonsterInfo.Id));
+		pDC->TextOutW(X + ID_POS, Y + ID_POS, nTos(TmpMonsterInfo.Id));
 	}
 	DeleteObject(pen);
 }
@@ -180,4 +181,44 @@ BOOL CMapEditerView::OnEraseBkgnd(CDC* pDC)
 	return TRUE;
 
 	//return CScrollView::OnEraseBkgnd(pDC);
+}
+
+
+void CMapEditerView::OnLButtonUp(UINT nFlags, CPoint point)
+{
+	// TODO:  在此添加消息处理程序代码和/或调用默认值
+	CMapEditerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (!pDoc)
+		return;
+
+// 	int X = point.x * GRID_CELL_SIZE;
+// 	int Y = point.y * GRID_CELL_SIZE;
+
+	POSITION pos;
+	struct MonsterInfo TmpMonsterInfo;
+	CString tmpStr;
+
+	CClientDC dc(this);
+	OnPrepareDC(&dc);
+	dc.DPtoLP(&point);
+
+	pos = pDoc->LMonsterInfo.GetHeadPosition();
+	for (int i = 0; i < pDoc->LMonsterInfo.GetCount(); i++)
+	{
+		TmpMonsterInfo = pDoc->LMonsterInfo.GetNext(pos);
+		unsigned __int8 rgb = (unsigned __int8)TmpMonsterInfo.Id;
+
+		int X = (int)(TmpMonsterInfo.X / GRID_CELL_SIZE);
+		int Y = (int)(TmpMonsterInfo.Y / GRID_CELL_SIZE);
+
+		if (point.x >= X && point.x <= X + MONSTER_SIZE
+			&& point.y >= Y && point.y <= Y + MONSTER_SIZE)
+		{
+			pDoc->UpdatePropertiesView(pos);
+			break;
+		}
+	}
+
+	CScrollView::OnLButtonUp(nFlags, point);
 }

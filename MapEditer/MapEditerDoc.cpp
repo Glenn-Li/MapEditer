@@ -32,7 +32,9 @@ END_MESSAGE_MAP()
 CMapEditerDoc::CMapEditerDoc()
 {
 	// TODO:  在此添加一次性构造代码
-	MapFileName = ".\\data\\LEVEL001.BIN";
+	MapFileFolder = ".\\data\\";
+	MapFileName = "LEVEL001.BIN";
+	PosSel = NULL;
 }
 
 CMapEditerDoc::~CMapEditerDoc()
@@ -143,7 +145,7 @@ int CMapEditerDoc::GetMapLength()
 	int MapLength = 0;
 	int ret = 0;
 
-	strPathName = MapFileName;
+	strPathName = MapFileFolder + MapFileName;
 	strPathName.Replace(_T(".BIN"), _T(".WRD"));
 	//检查文件是否存在
 	DWORD dwRe = GetFileAttributes(strPathName);
@@ -154,7 +156,7 @@ int CMapEditerDoc::GetMapLength()
 	else
 	{
 		CString errormessage;
-		TRACE(strPathName + _T("文件不存在！"));
+		AfxMessageBox(_T("WRD文件不存在！"));
 		return 0;
 	}
 
@@ -175,6 +177,7 @@ int CMapEditerDoc::GetMapLength()
 
 void CMapEditerDoc::GetMonstersInfo()
 {
+	CString strPathName;
 	struct MonsterInfo TmpMonsterInfo;
 	char Head[16];
 	int ret = 0;
@@ -182,7 +185,8 @@ void CMapEditerDoc::GetMonstersInfo()
 	LMonsterInfo.RemoveAll();
 
 	//检查文件是否存在
-	DWORD dwRe = GetFileAttributes(MapFileName);
+	strPathName = MapFileFolder + MapFileName;
+	DWORD dwRe = GetFileAttributes(strPathName);
 	if (dwRe != (DWORD)-1)
 	{
 		//ShellExecute(NULL, NULL, strFilePath, NULL, NULL, SW_RESTORE); 
@@ -194,7 +198,7 @@ void CMapEditerDoc::GetMonstersInfo()
 		return;
 	}
 
-	CFile iFile(MapFileName, CFile::modeRead | CFile::modeNoTruncate | CFile::shareDenyNone);
+	CFile iFile(strPathName, CFile::modeRead | CFile::modeNoTruncate | CFile::shareDenyNone);
 	CArchive iar(&iFile, CArchive::load);
 
 	ret = sizeof(TmpMonsterInfo);
@@ -209,8 +213,9 @@ void CMapEditerDoc::GetMonstersInfo()
 			LMonsterInfo.AddTail(TmpMonsterInfo);
 			//TRACE("X-%d,Y-%d\n", TmpMonsterInfo.X, TmpMonsterInfo.Y);
 		}
-
 	}
+
+//	LMonsterInfo.sort();
 
 	iar.Close();
 	iFile.Close();
@@ -218,16 +223,19 @@ void CMapEditerDoc::GetMonstersInfo()
 
 // CMapEditerDoc 命令
 
-LRESULT CMapEditerDoc::OnOpenNewDoc(WPARAM wParam, LPARAM lParam)
+void CMapEditerDoc::OnOpenNewDoc(CString strFileName)
 {
-	MapFileName = *((CString*)lParam);
+	MapFileName = strFileName;
 
-	MapLength = GetMapLength() * 16;
-	MapHeigth = 55 * 16;
+	MapLength = GetMapLength() * MAP_SIZE_RATIO;
+	MapHeigth = 55 * MAP_SIZE_RATIO;
 
 	GetMonstersInfo();
 
 	UpdateAllViews(NULL);
+}
 
-	return 0;
+void CMapEditerDoc::UpdatePropertiesView(POSITION pos)
+{
+	PosSel = pos;
 }

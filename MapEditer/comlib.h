@@ -5,6 +5,13 @@
 
 #define WM_OPENDOC				(WM_USER+100)
 
+
+/* 地图各种缩放显示比例 */
+#define MAP_SIZE_RATIO	16
+#define GRID_CELL_SIZE	4
+#define MONSTER_SIZE	32
+#define ID_POS			8
+
 #pragma pack(1)
 struct MonsterInfo
 {

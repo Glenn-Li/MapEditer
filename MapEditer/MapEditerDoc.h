@@ -16,16 +16,19 @@ protected: // 仅从序列化创建
 
 // 特性
 public:
+	CString MapFileFolder;
 	CString MapFileName;
 	int MapLength;
 	int MapHeigth;
 	CList <MonsterInfo, MonsterInfo&> LMonsterInfo;
+	POSITION PosSel;
 
 // 操作
 public:
 	int GetMapLength();
 	void GetMonstersInfo();
-	afx_msg LRESULT OnOpenNewDoc(WPARAM wParam, LPARAM lParam);
+	void CMapEditerDoc::OnOpenNewDoc(CString strFileName);
+	void CMapEditerDoc::UpdatePropertiesView(POSITION pos);
 
 // 重写
 public:

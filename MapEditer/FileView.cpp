@@ -42,6 +42,17 @@ END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
 // CWorkspaceBar 消息处理程序
 
+CMapEditerDoc* CFileView::GetDocument()
+{
+	CMainFrame *frm = (CMainFrame*)::AfxGetMainWnd();
+	ASSERT(frm);
+	CDocument *pDoc = frm->GetActiveDocument();
+	ASSERT(pDoc);
+	ASSERT(pDoc->IsKindOf(RUNTIME_CLASS(CMapEditerDoc)));
+
+	return (CMapEditerDoc*)pDoc;
+}
+
 int CFileView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CDockablePane::OnCreate(lpCreateStruct) == -1)
@@ -136,6 +147,7 @@ void CFileView::OnContextMenu(CWnd* pWnd, CPoint point)
 		if (hTreeItem != NULL)
 		{
 			pWndTree->SelectItem(hTreeItem);
+			strSelFile = pWndTree->GetItemText(hTreeItem);
 		}
 	}
 
@@ -168,13 +180,9 @@ void CFileView::OnProperties()
 void CFileView::OnFileOpen()
 {
 	// TODO:  在此处添加命令处理程序代码
-// 	CMapEditerDoc* pDoc = GetDocument();
-// 	ASSERT_VALID(pDoc);
-// 	if (!pDoc)
-// 		return;
-// 	CString strFilePath = _T(".\\data\\LEVEL002.BIN");
-// 	::SendMessage(pDoc, WM_OPENDOC, 0, (LPARAM)(&strFilePath));
-
+	pDoc = GetDocument();
+	pDoc->OnOpenNewDoc(strSelFile);
+	//pDoc->OnOpenNewDoc(_T(".\\data\\LEVEL002.BIN"));
 }
 
 void CFileView::OnFileOpenWith()

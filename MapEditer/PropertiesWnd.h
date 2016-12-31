@@ -1,5 +1,6 @@
 
 #pragma once
+#include "MapEditerDoc.h"
 
 class CPropertiesToolBar : public CMFCToolBar
 {
@@ -28,6 +29,10 @@ public:
 		m_wndPropList.SetGroupNameFullWidth(bSet);
 	}
 
+	CMFCPropertyGridProperty* pGroupBase;
+	CMFCPropertyGridProperty* pGroupToMap;
+	CMFCPropertyGridProperty* pGroupNPC;
+
 protected:
 	CFont m_fntPropList;
 	CComboBox m_wndObjectCombo;
@@ -37,6 +42,8 @@ protected:
 // й╣ож
 public:
 	virtual ~CPropertiesWnd();
+	CMapEditerDoc* CPropertiesWnd::GetDocument();
+	void CPropertiesWnd::UpdatePropList(MonsterInfo *pMonsterInfo);
 
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
