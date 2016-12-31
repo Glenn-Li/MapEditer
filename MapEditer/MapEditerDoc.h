@@ -29,6 +29,7 @@ public:
 	void GetMonstersInfo();
 	void CMapEditerDoc::OnOpenNewDoc(CString strFileName);
 	void CMapEditerDoc::UpdatePropertiesView(POSITION pos);
+	BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos);
 
 // ÖØÐ´
 public:

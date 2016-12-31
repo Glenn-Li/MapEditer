@@ -239,3 +239,26 @@ void CMapEditerDoc::UpdatePropertiesView(POSITION pos)
 {
 	PosSel = pos;
 }
+
+BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos)
+{
+	struct MonsterInfo TmpMonsterInfo;
+
+	*pos = LMonsterInfo.GetHeadPosition();
+
+	for (int i = 0; i < LMonsterInfo.GetCount(); i++)
+	{
+		TmpMonsterInfo = LMonsterInfo.GetNext(*pos);
+
+		int X = (int)(TmpMonsterInfo.X / GRID_CELL_SIZE);
+		int Y = (int)(TmpMonsterInfo.Y / GRID_CELL_SIZE);
+
+		if (point.x >= X && point.x <= X + MONSTER_SIZE
+			&& point.y >= Y && point.y <= Y + MONSTER_SIZE)
+		{
+			return TRUE;
+		}
+	}
+
+	return FALSE;
+}

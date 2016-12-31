@@ -196,29 +196,13 @@ void CMapEditerView::OnLButtonUp(UINT nFlags, CPoint point)
 // 	int Y = point.y * GRID_CELL_SIZE;
 
 	POSITION pos;
-	struct MonsterInfo TmpMonsterInfo;
-	CString tmpStr;
 
 	CClientDC dc(this);
 	OnPrepareDC(&dc);
 	dc.DPtoLP(&point);
 
-	pos = pDoc->LMonsterInfo.GetHeadPosition();
-	for (int i = 0; i < pDoc->LMonsterInfo.GetCount(); i++)
-	{
-		TmpMonsterInfo = pDoc->LMonsterInfo.GetNext(pos);
-		unsigned __int8 rgb = (unsigned __int8)TmpMonsterInfo.Id;
-
-		int X = (int)(TmpMonsterInfo.X / GRID_CELL_SIZE);
-		int Y = (int)(TmpMonsterInfo.Y / GRID_CELL_SIZE);
-
-		if (point.x >= X && point.x <= X + MONSTER_SIZE
-			&& point.y >= Y && point.y <= Y + MONSTER_SIZE)
-		{
-			pDoc->UpdatePropertiesView(pos);
-			break;
-		}
-	}
+	if (pDoc->GetMonstersRect(point, &pos))
+		pDoc->UpdatePropertiesView(pos);
 
 	CScrollView::OnLButtonUp(nFlags, point);
 }
