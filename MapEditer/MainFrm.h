@@ -44,6 +44,8 @@ protected:  // 控件条嵌入成员
 	COutputWnd        m_wndOutput;
 	CPropertiesWnd    m_wndProperties;
 
+	CMFCToolBar        m_wndEditBar;
+
 // 生成的消息映射函数
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

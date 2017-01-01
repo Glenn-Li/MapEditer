@@ -43,7 +43,7 @@ protected:
 public:
 	virtual ~CPropertiesWnd();
 	CMapEditerDoc* CPropertiesWnd::GetDocument();
-	void CPropertiesWnd::UpdatePropList(MonsterInfo *pMonsterInfo);
+	void CPropertiesWnd::UpdatePropList(struct MonsterInfo *pMonsterInfo);
 
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);

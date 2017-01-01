@@ -103,8 +103,8 @@ void CFileView::OnSize(UINT nType, int cx, int cy)
 
 void CFileView::FillFileView()
 {
-	CString strMapFileFolder = _T(".\\data\\");
-	CString strMapFileName = _T(".\\data\\*.bin");
+	CString strMapFileFolder = DEFAULT_PATH;
+	CString strMapFileName = strMapFileFolder + _T("*.bin");
 	CFileFind ff;
 
 	HTREEITEM hRoot = m_wndFileView.InsertItem(_T("Map нд╪Ч"), 0, 0);

@@ -321,20 +321,21 @@ void CPropertiesWnd::SetPropListFont()
 }
 
 
-void CPropertiesWnd::UpdatePropList(MonsterInfo *pMonsterInfo)
+void CPropertiesWnd::UpdatePropList(struct MonsterInfo *pMonsterInfo)
 {
 	CMFCPropertyGridProperty* pProp;
+	struct MonsterPropertie* pMonsterPropertie = &pMonsterInfo->m_Propertie;
 
-	pGroupBase->GetSubItem(0)->SetValue((_variant_t)(long)pMonsterInfo->Id);
-	pGroupBase->GetSubItem(1)->SetValue((_variant_t)(long)pMonsterInfo->X);
-	pGroupBase->GetSubItem(2)->SetValue((_variant_t)(long)pMonsterInfo->Y);
+	pGroupBase->GetSubItem(0)->SetValue((_variant_t)(long)pMonsterPropertie->Id);
+	pGroupBase->GetSubItem(1)->SetValue((_variant_t)(long)pMonsterPropertie->X);
+	pGroupBase->GetSubItem(2)->SetValue((_variant_t)(long)pMonsterPropertie->Y);
 
 
-	pGroupToMap->GetSubItem(0)->SetValue((_variant_t)(long)pMonsterInfo->ToMapId);
-	pGroupToMap->GetSubItem(1)->SetValue((_variant_t)(long)pMonsterInfo->ToMapX);
-	pGroupToMap->GetSubItem(2)->SetValue((_variant_t)(long)pMonsterInfo->ToMapY);
-	pGroupToMap->GetSubItem(3)->SetValue((_variant_t)(long)pMonsterInfo->ToShop);
+	pGroupToMap->GetSubItem(0)->SetValue((_variant_t)(long)pMonsterPropertie->ToMapId);
+	pGroupToMap->GetSubItem(1)->SetValue((_variant_t)(long)pMonsterPropertie->ToMapX);
+	pGroupToMap->GetSubItem(2)->SetValue((_variant_t)(long)pMonsterPropertie->ToMapY);
+	pGroupToMap->GetSubItem(3)->SetValue((_variant_t)(long)pMonsterPropertie->ToShop);
 
-	pGroupNPC->GetSubItem(0)->SetValue((_variant_t)(long)pMonsterInfo->NpcTalkId);
-	pGroupNPC->GetSubItem(1)->SetValue((_variant_t)(long)pMonsterInfo->ResNameId);
+	pGroupNPC->GetSubItem(0)->SetValue((_variant_t)(long)pMonsterPropertie->NpcTalkId);
+	pGroupNPC->GetSubItem(1)->SetValue((_variant_t)(long)pMonsterPropertie->ResNameId);
 }

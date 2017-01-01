@@ -149,10 +149,14 @@
     <Image Include="res\fileview_hc.bmp" />
     <Image Include="res\file_view.ico" />
     <Image Include="res\file_view_hc.ico" />
+    <Image Include="res\icon1.ico" />
     <Image Include="res\MapEditer.ico" />
     <Image Include="res\MapEditerDoc.ico" />
     <Image Include="res\menuimages.bmp" />
     <Image Include="res\menuimages_hc.bmp" />
+    <Image Include="res\monster_add.ico" />
+    <Image Include="res\monster_check.ico" />
+    <Image Include="res\monster_delete.ico" />
     <Image Include="res\output_wnd.ico" />
     <Image Include="res\output_wnd_hc.ico" />
     <Image Include="res\properties.bmp" />
@@ -162,6 +166,7 @@
     <Image Include="res\sort.bmp" />
     <Image Include="res\sort_hc.bmp" />
     <Image Include="res\Toolbar.bmp" />
+    <Image Include="res\toolbar1.bmp" />
     <Image Include="res\Toolbar256.bmp" />
     <Image Include="UserImages.bmp" />
   </ItemGroup>

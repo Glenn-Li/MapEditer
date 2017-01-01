@@ -26,6 +26,14 @@ public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
 	virtual void OnInitialUpdate(); // 构造后第一次调用
+	CPoint m_ptPrev;       // the last mouse pt in the stroke in progress
+	CPoint m_ptPrev1;
+	CPoint m_LastPt;
+
+	POSITION m_MonsterSel;
+	int m_nColor;
+	int m_nMonster_X;
+	int m_nMonster_Y;
 
 // 实现
 public:
@@ -50,6 +58,11 @@ private:
 public:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
+	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
+	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnMonsterAdd();
+	afx_msg void OnMonsterDel();
+	afx_msg void OnMonsterCheck();
 };
 
 #ifndef _DEBUG  // MapEditerView.cpp 中的调试版本

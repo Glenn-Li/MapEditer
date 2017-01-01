@@ -180,5 +180,20 @@
     <Image Include="res\Toolbar256.bmp">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="res\toolbar1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\icon1.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\monster_add.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\monster_check.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\monster_delete.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>
