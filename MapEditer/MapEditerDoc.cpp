@@ -40,6 +40,8 @@ CMapEditerDoc::CMapEditerDoc()
 	MapFileFolder = "F:\\Game\\三国-本地测试\\data\\";
 	MapFileName = "LEVEL517.BIN";
 	PosSel = NULL;
+
+	memset(m_MonsterInfoSel, 0, sizeof(m_MonsterInfoSel));
 }
 
 CMapEditerDoc::~CMapEditerDoc()
@@ -382,10 +384,10 @@ void CMapEditerDoc::UpdatePropertiesView(POSITION pos)
 	PosSelPrev = pos;
 }
 
-BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos)
+BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos, struct MonsterPropertie** pMonsterPropertie)
 {
-	struct MonsterInfo TmpMonsterInfo;
-	struct MonsterPropertie* pMonsterPropertie = &TmpMonsterInfo.m_Propertie;
+// 	struct MonsterInfo TmpMonsterInfo;
+// 	struct MonsterPropertie* pTmpMonsterPropertie = &TmpMonsterInfo.m_Propertie;
 
 	POSITION tmpPos, PosPrev;
 	tmpPos = LMonsterInfo.GetHeadPosition();
@@ -393,17 +395,32 @@ BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos)
 	for (int i = 0; i < LMonsterInfo.GetCount(); i++)
 	{
 		PosPrev = tmpPos;
-		TmpMonsterInfo = LMonsterInfo.GetNext(tmpPos);
+		*pMonsterPropertie = &LMonsterInfo.GetNext(tmpPos).m_Propertie;
 
-		int X = (int)(pMonsterPropertie->X / MONSTER_POS_RATIO);
-		int Y = (int)(pMonsterPropertie->Y / MONSTER_POS_RATIO);
+		int X = (int)((*pMonsterPropertie)->X / MONSTER_POS_RATIO);
+		int Y = (int)((*pMonsterPropertie)->Y / MONSTER_POS_RATIO);
 
 		if (point.x >= X && point.x <= X + MONSTER_SIZE
 			&& point.y >= Y && point.y <= Y + MONSTER_SIZE)
 		{
 			*pos = PosPrev;
+			m_MonsterInfoSel[0] = PosPrev;
 			return TRUE;
 		}
+	}
+
+	m_MonsterInfoSel[0] = NULL;
+	*pMonsterPropertie = NULL;
+	return FALSE;
+}
+
+BOOL CMapEditerDoc::MonsterInfoCompare(struct MonsterInfo* pSrc, struct MonsterInfo* pSrc1)
+{
+	if (pSrc->m_Propertie.Id == pSrc1->m_Propertie.Id
+		&& pSrc->m_Propertie.X == pSrc1->m_Propertie.X
+		&& pSrc->m_Propertie.Y == pSrc1->m_Propertie.Y)
+	{
+		return TRUE;
 	}
 
 	return FALSE;
@@ -411,9 +428,23 @@ BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos)
 
 void CMapEditerDoc::CreatMonsterRect(struct MonsterInfo* pMonsterInfo, struct MonsterBlock* pMonsterBlock)
 {
+	struct MonsterInfo TmpMonsterInfo;
 	struct MonsterPropertie* pMonsterPropertie = &pMonsterInfo->m_Propertie;
 	pMonsterBlock->m_TextColor = RGB(0, 0, 0);
 	pMonsterBlock->m_PenColor = RGB(255, 0, 255);
+	pMonsterBlock->m_PenWidth = 1;
+
+	POSITION tmpPos = m_MonsterInfoSel[0];
+	if (LMonsterInfo.GetCount() > 0 && tmpPos != NULL)
+	{
+		TmpMonsterInfo = LMonsterInfo.GetNext(tmpPos);
+		if (MonsterInfoCompare(&TmpMonsterInfo, pMonsterInfo))
+		{
+			pMonsterBlock->m_PenColor = RGB(0, 255, 0);
+			pMonsterBlock->m_PenWidth = 2;
+		}
+	}
+		
 
 	unsigned __int8 rgb = (unsigned __int8)pMonsterPropertie->Id;
 	pMonsterBlock->m_BrushColor = RGB(rgb, rgb, rgb);
@@ -423,5 +454,5 @@ void CMapEditerDoc::CreatMonsterRect(struct MonsterInfo* pMonsterInfo, struct Mo
 
 	pMonsterBlock->m_CRect = CRect(X, Y, X + MONSTER_SIZE, Y + MONSTER_SIZE);
 	pMonsterBlock->m_TextPoint.x = X + ID_POS;
-	pMonsterBlock->m_TextPoint.y = Y + ID_POS;
+	pMonsterBlock->m_TextPoint.y = Y;
 }

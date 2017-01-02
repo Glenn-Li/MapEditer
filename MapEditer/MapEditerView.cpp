@@ -73,10 +73,37 @@ void CMapEditerView::OnDraw(CDC* pDC)
 	sizeTotal.cy = pDoc->MapHeigth;
 	SetScrollSizes(MM_TEXT, sizeTotal);
 
-	//DrawGrid(pDC, pDoc);
-	OnEraseBkgnd(pDC);
+	// 双缓存技术解决闪屏，部分更新带了的画笔不一致问题
 
-	DisplayMonsterInfo(pDC, pDoc);
+//	CPoint ptCenter;
+
+//	CRect rect, ellipseRect;
+
+//	GetClientRect(&rect);
+
+//	ptCenter = rect.CenterPoint();
+
+	CDC dcMem; //用于缓冲作图的内存DC
+
+	CBitmap bmp; //内存中承载临时图象的位图
+
+	dcMem.CreateCompatibleDC(pDC); //依附窗口DC创建兼容内存DC
+
+	bmp.CreateCompatibleBitmap(pDC, pDoc->MapLength, pDoc->MapHeigth); //创建兼容位图, 传入pDC才能画出彩色图
+
+	dcMem.SelectObject(&bmp); //将位图选择进内存DC
+
+//	dcMem.FillSolidRect(rect, pDC->GetBkColor()); //按原来背景填充客户区，不然会是黑色
+
+	DrawGrid(&dcMem, pDoc);
+
+	DisplayMonsterInfo(&dcMem, pDoc);
+
+	pDC->BitBlt(0, 0, pDoc->MapLength, pDoc->MapHeigth, &dcMem, 0, 0, SRCCOPY);//将内存DC上的图象拷贝到前台
+
+	dcMem.DeleteDC(); //删除DC
+
+	bmp.DeleteObject(); //删除位图
 }
 
 void CMapEditerView::OnInitialUpdate()
@@ -164,7 +191,7 @@ void CMapEditerView::DisplayMonsterInfo(CDC* pDC, CMapEditerDoc* pDoc)
 		pDoc->CreatMonsterRect(&TmpMonsterInfo, &m_MonsterBlock);
 
 		CPen pen;
-		pen.CreatePen(PS_SOLID, 1, m_MonsterBlock.m_PenColor);
+		pen.CreatePen(PS_SOLID, m_MonsterBlock.m_PenWidth, m_MonsterBlock.m_PenColor);
 		pDC->SelectObject(pen);
 
 		CBrush brush;
@@ -184,21 +211,15 @@ void CMapEditerView::DisplayMonsterInfo(CDC* pDC, CMapEditerDoc* pDoc)
 BOOL CMapEditerView::OnEraseBkgnd(CDC* pDC)
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
-	CBrush brush(RGB(0, 0, 0));
-	CBrush* pOldOne= pDC->SelectObject(&brush);
-	CRect rc;
-	pDC->GetClipBox(&rc);
-	pDC->PatBlt(rc.left, rc.top, rc.Width(), rc.Height(), PATCOPY);
-	pDC->SelectObject(pOldOne);
 
-	CMapEditerDoc* pDoc = GetDocument();
-	ASSERT_VALID(pDoc);
-	if (!pDoc)
-		return FALSE;
-
-	DrawGrid(pDC, pDoc);
-
-
+	// 把背景刷黑，放到内存缓冲处理，否则会导致闪屏
+// 	CBrush brush(RGB(0, 0, 0));
+// 	CBrush* pOldOne= pDC->SelectObject(&brush);
+// 	CRect rc;
+// 	pDC->GetClipBox(&rc);
+// 	pDC->PatBlt(rc.left, rc.top, rc.Width(), rc.Height(), PATCOPY);
+// 	pDC->SelectObject(pOldOne);
+	
 	return TRUE;
 
 	//return CScrollView::OnEraseBkgnd(pDC);
@@ -217,14 +238,29 @@ void CMapEditerView::OnLButtonUp(UINT nFlags, CPoint point)
 // 	int Y = point.y * MONSTER_POS_RATIO;
 
 	POSITION pos;
+	CRect rectReflash;
+	struct MonsterPropertie* pMonsterPropertie;
 
 	CClientDC dc(this);
 	OnPrepareDC(&dc);
 	dc.DPtoLP(&point);
 	m_LastPt = point;
 
-	if (pDoc->GetMonstersRect(point, &pos))
+	if (pDoc->GetMonstersRect(point, &pos, &pMonsterPropertie))
+	{
 		pDoc->UpdatePropertiesView(pos);
+
+		rectReflash.left = pMonsterPropertie->X;
+		rectReflash.top = pMonsterPropertie->Y;
+		rectReflash.right = pMonsterPropertie->X + MONSTER_SIZE;
+		rectReflash.bottom = pMonsterPropertie->Y + MONSTER_SIZE;
+
+		dc.LPtoDP(&rectReflash);		//注意：LPtoDP
+
+		//InvalidateRect(rectReflash);
+
+		Invalidate();
+	}
 
 	if (GetCapture() != this)
 		return;
@@ -255,12 +291,13 @@ void CMapEditerView::OnLButtonDown(UINT nFlags, CPoint point)
 	SetCapture();
 
 	POSITION pos, posPrev;
+	struct MonsterPropertie* pMonsterPropertie;
 
-	if (pDoc->GetMonstersRect(point, &pos))
+	if (pDoc->GetMonstersRect(point, &pos, &pMonsterPropertie))
 	{
 		posPrev = pos;
 		struct MonsterInfo m_MonsterInfo = pDoc->LMonsterInfo.GetNext(pos);
-		struct MonsterPropertie* pMonsterPropertie = &m_MonsterInfo.m_Propertie;
+		//struct MonsterPropertie* pMonsterPropertie = &m_MonsterInfo.m_Propertie;
 		struct MonsterBlock m_MonsterBlock;
 		pDoc->CreatMonsterRect(&m_MonsterInfo, &m_MonsterBlock);
 
@@ -318,8 +355,8 @@ void CMapEditerView::OnMouseMove(UINT nFlags, CPoint point)
 
 		dc.LPtoDP(&rectReflash);		//注意：LPtoDP
 
-		InvalidateRect(rectReflash);
-		//Invalidate();
+		//InvalidateRect(rectReflash);
+		Invalidate();
 		m_ptPrev1 = point;
 	}
 
@@ -411,9 +448,9 @@ void CMapEditerView::OnMonsterDel()
 		return;
 
 	struct MonsterInfo m_MonsterInfo;
-	struct MonsterPropertie* pMonsterPropertie = &m_MonsterInfo.m_Propertie;
+	struct MonsterPropertie* pMonsterPropertie = NULL;
 
-	if (pDoc->GetMonstersRect(m_LastPt, &pos))
+	if (pDoc->GetMonstersRect(m_LastPt, &pos, &pMonsterPropertie))
 	{
 		posPrev = pos;
 		m_MonsterInfo = pDoc->LMonsterInfo.GetNext(pos);

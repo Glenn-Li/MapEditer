@@ -60,6 +60,7 @@ struct MapBinHead
 struct MonsterBlock
 {
 	COLORREF m_PenColor;
+	int m_PenWidth;
 	COLORREF m_BrushColor;
 	COLORREF m_TextColor;
 	CRect m_CRect;

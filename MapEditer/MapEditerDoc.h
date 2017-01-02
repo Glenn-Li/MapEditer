@@ -30,6 +30,8 @@ public:
 	POSITION PosSelPrev;
 	POSITION PosSel;
 
+	POSITION m_MonsterInfoSel[128]; // 选中的怪物id
+
 // 操作
 public:
 	int GetMapLength();
@@ -39,8 +41,9 @@ public:
 	void CMapEditerDoc::SaveMonstersInfo();
 	void CMapEditerDoc::OnOpenNewDoc(CString strFileName);
 	void CMapEditerDoc::UpdatePropertiesView(POSITION pos);
-	BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos);
+	BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos, struct MonsterPropertie** pMonsterPropertie);
 	void CMapEditerDoc::CreatMonsterRect(struct MonsterInfo* pMonsterInfo, struct MonsterBlock* pMonsterBlock);
+	BOOL MonsterInfoCompare(struct MonsterInfo* pSrc, struct MonsterInfo* pSrc1);
 
 // 重写
 public:
