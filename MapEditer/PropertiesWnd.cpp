@@ -323,7 +323,7 @@ void CPropertiesWnd::SetPropListFont()
 
 void CPropertiesWnd::UpdatePropList(struct MonsterInfo *pMonsterInfo)
 {
-	CMFCPropertyGridProperty* pProp;
+/*	CMFCPropertyGridProperty* pProp;*/
 	struct MonsterPropertie* pMonsterPropertie = &pMonsterInfo->m_Propertie;
 
 	pGroupBase->GetSubItem(0)->SetValue((_variant_t)(long)pMonsterPropertie->Id);

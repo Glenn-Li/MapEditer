@@ -38,7 +38,7 @@ CMapEditerDoc::CMapEditerDoc()
 	// TODO:  在此添加一次性构造代码
 	//MapFileFolder = ".\\data\\";
 	MapFileFolder = "F:\\Game\\三国-本地测试\\data\\";
-	MapFileName = "LEVEL517.BIN";
+	MapFileName = "LEVEL001.BIN";
 	PosSel = NULL;
 
 	memset(m_MonsterInfoSel, 0, sizeof(m_MonsterInfoSel));
@@ -55,8 +55,12 @@ BOOL CMapEditerDoc::OnNewDocument()
 
 	// TODO:  在此添加重新初始化代码
 	// (SDI 文档将重用该文档)
-	MapLength = GetMapLength() * MAP_SIZE_RATIO;
-	MapHeigth = 55 * MAP_SIZE_RATIO;
+	GetMapSize();
+	MapLength = MapLength * MAP_SIZE_RATIO;
+	MapHeigth = MapHeigth * MAP_SIZE_RATIO;
+
+	PosSel = NULL;
+	memset(m_MonsterInfoSel, 0, sizeof(m_MonsterInfoSel));
 
 	GetMonstersInfo();
 
@@ -162,11 +166,10 @@ void CMapEditerDoc::Dump(CDumpContext& dc) const
 }
 #endif //_DEBUG
 
-int CMapEditerDoc::GetMapLength()
+int CMapEditerDoc::GetMapSize()
 {
 	CString strPathName;
 	struct MapWrdHead sMapWrdHead;
-	int MapLength = 0;
 	int ret = 0;
 
 	strPathName = MapFileFolder + MapFileName;
@@ -190,12 +193,15 @@ int CMapEditerDoc::GetMapLength()
 	ret = sizeof(sMapWrdHead);
 	ret = iar.Read(&sMapWrdHead, sizeof(sMapWrdHead));
 	if (ret > 0)
+	{
 		MapLength = sMapWrdHead.MapLength;
+		MapHeigth = sMapWrdHead.MapWigth;
+	}
 
 	iar.Close();
 	iFile.Close();
 
-	return MapLength;
+	return 0;
 }
 
 int CMapEditerDoc::GetMonsterCount()
@@ -287,11 +293,13 @@ void CMapEditerDoc::GetMonstersInfo()
 	for (; ret > 0;)
 	{
 		ret = iar.Read(TmpMonsterPropertie, sizeof(struct MonsterPropertie));
-		TRACE("ID-%u(%u, %u)\n", TmpMonsterPropertie->Id, TmpMonsterPropertie->X, TmpMonsterPropertie->Y);
+		TRACE("ID-%u(%d, %d)\n", TmpMonsterPropertie->Id, TmpMonsterPropertie->X, TmpMonsterPropertie->Y);
 		if (ret <= 0) break;
 
 		if (TmpMonsterPropertie->Flag == 0)
 		{
+			LMonsterInfo.AddTail(TmpMonsterInfo);
+			continue;
 			// 按升序插入
 			if (LMonsterInfo.GetCount() == 0)
 			{
@@ -370,8 +378,9 @@ void CMapEditerDoc::OnOpenNewDoc(CString strFileName)
 {
 	MapFileName = strFileName;
 
-	MapLength = GetMapLength() * MAP_SIZE_RATIO;
-	MapHeigth = 55 * MAP_SIZE_RATIO;
+	GetMapSize();
+	MapLength = MapLength * MAP_SIZE_RATIO;
+	MapHeigth = MapHeigth * MAP_SIZE_RATIO;
 
 	GetMonstersInfo();
 
@@ -384,14 +393,13 @@ void CMapEditerDoc::UpdatePropertiesView(POSITION pos)
 	PosSelPrev = pos;
 }
 
-BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos, struct MonsterPropertie** pMonsterPropertie)
+BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos, struct MonsterPropertie** pMonsterPropertie, int nFlag)
 {
 // 	struct MonsterInfo TmpMonsterInfo;
 // 	struct MonsterPropertie* pTmpMonsterPropertie = &TmpMonsterInfo.m_Propertie;
 
 	POSITION tmpPos, PosPrev;
 	tmpPos = LMonsterInfo.GetHeadPosition();
-
 	for (int i = 0; i < LMonsterInfo.GetCount(); i++)
 	{
 		PosPrev = tmpPos;
@@ -404,12 +412,14 @@ BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos, struct MonsterP
 			&& point.y >= Y && point.y <= Y + MONSTER_SIZE)
 		{
 			*pos = PosPrev;
-			m_MonsterInfoSel[0] = PosPrev;
+			if (nFlag == 1)
+			{
+				memset(m_MonsterInfoSel, 0, sizeof(m_MonsterInfoSel));
+				m_MonsterInfoSel[0] = PosPrev;
+			}
 			return TRUE;
 		}
 	}
-
-	m_MonsterInfoSel[0] = NULL;
 	*pMonsterPropertie = NULL;
 	return FALSE;
 }
@@ -428,23 +438,27 @@ BOOL CMapEditerDoc::MonsterInfoCompare(struct MonsterInfo* pSrc, struct MonsterI
 
 void CMapEditerDoc::CreatMonsterRect(struct MonsterInfo* pMonsterInfo, struct MonsterBlock* pMonsterBlock)
 {
+	int nInc = 0;
 	struct MonsterInfo TmpMonsterInfo;
 	struct MonsterPropertie* pMonsterPropertie = &pMonsterInfo->m_Propertie;
 	pMonsterBlock->m_TextColor = RGB(0, 0, 0);
 	pMonsterBlock->m_PenColor = RGB(255, 0, 255);
 	pMonsterBlock->m_PenWidth = 1;
 
-	POSITION tmpPos = m_MonsterInfoSel[0];
-	if (LMonsterInfo.GetCount() > 0 && tmpPos != NULL)
+	POSITION tmpPos = m_MonsterInfoSel[nInc];
+	if (LMonsterInfo.GetCount() > 0)
 	{
-		TmpMonsterInfo = LMonsterInfo.GetNext(tmpPos);
-		if (MonsterInfoCompare(&TmpMonsterInfo, pMonsterInfo))
+		while (tmpPos != NULL)
 		{
-			pMonsterBlock->m_PenColor = RGB(0, 255, 0);
-			pMonsterBlock->m_PenWidth = 2;
+			TmpMonsterInfo = LMonsterInfo.GetNext(tmpPos);
+			if (MonsterInfoCompare(&TmpMonsterInfo, pMonsterInfo))
+			{
+				pMonsterBlock->m_PenColor = RGB(0, 255, 0);
+				pMonsterBlock->m_PenWidth = 2;
+			}
+			tmpPos = m_MonsterInfoSel[nInc++];
 		}
 	}
-		
 
 	unsigned __int8 rgb = (unsigned __int8)pMonsterPropertie->Id;
 	pMonsterBlock->m_BrushColor = RGB(rgb, rgb, rgb);
@@ -455,4 +469,88 @@ void CMapEditerDoc::CreatMonsterRect(struct MonsterInfo* pMonsterInfo, struct Mo
 	pMonsterBlock->m_CRect = CRect(X, Y, X + MONSTER_SIZE, Y + MONSTER_SIZE);
 	pMonsterBlock->m_TextPoint.x = X + ID_POS;
 	pMonsterBlock->m_TextPoint.y = Y;
+}
+
+void CMapEditerDoc::MarkMonstersInRect(CPoint m_ptPrev, CPoint m_ptLast)
+{
+	struct MonsterPropertie* pMonsterPropertie;
+	POSITION tmpPos, PosPrev;
+	tmpPos = LMonsterInfo.GetHeadPosition();
+	int nLeft = min(m_ptPrev.x, m_ptLast.x);
+	int nTop = min(m_ptPrev.y, m_ptLast.y);
+	int nRight = max(m_ptPrev.x, m_ptLast.x);
+	int nBottom = max(m_ptPrev.y, m_ptLast.y);
+
+	int nInc = 0;
+	memset(m_MonsterInfoSel, 0, sizeof(m_MonsterInfoSel));
+	for (int i = 0; i < LMonsterInfo.GetCount(); i++)
+	{
+		PosPrev = tmpPos;
+		pMonsterPropertie = &LMonsterInfo.GetNext(tmpPos).m_Propertie;
+
+		int X = (int)(pMonsterPropertie->X / MONSTER_POS_RATIO);
+		int Y = (int)(pMonsterPropertie->Y / MONSTER_POS_RATIO);
+
+		if (nLeft <= X && X <= nRight && nTop <= Y && Y <= nBottom   // 左上顶点
+			&& nLeft <= X + MONSTER_SIZE && X + MONSTER_SIZE <= nRight && nTop <= Y && Y <= nBottom   // 右上顶点
+			&& nLeft <= X && X <= nRight && nTop <= Y + MONSTER_SIZE && Y + MONSTER_SIZE <= nBottom  // 左下顶点
+			&& nLeft <= X + MONSTER_SIZE && X + MONSTER_SIZE <= nRight && nTop <= Y + MONSTER_SIZE && Y + MONSTER_SIZE <= nBottom) // 右下顶点
+		{
+			m_MonsterInfoSel[nInc++] = PosPrev;
+		}
+	}
+}
+
+void CMapEditerDoc::OnAlignSelectMonsters(int nType)
+{
+	int nInc = 0;
+	POSITION tmpPos, prevPos;
+	struct MonsterInfo TmpMonsterInfo;
+	struct MonsterPropertie* pMonsterPropertie;
+	int x, y;
+
+	if (LMonsterInfo.GetCount() == 0 || m_MonsterInfoSel[0] == NULL)
+		return;
+
+	tmpPos = m_MonsterInfoSel[nInc++];
+	TmpMonsterInfo = LMonsterInfo.GetNext(tmpPos);
+	pMonsterPropertie = &TmpMonsterInfo.m_Propertie;
+
+	// 设置好对其参考，因为现在怪物的大小都是32，所以x一样就左右居中了，Y一样也就上下居中了。。。。
+	x = pMonsterPropertie->X;
+	y = pMonsterPropertie->Y;
+
+	tmpPos = m_MonsterInfoSel[nInc++];
+	while (tmpPos != NULL)
+	{
+		prevPos = tmpPos;
+		TmpMonsterInfo = LMonsterInfo.GetNext(tmpPos);
+		pMonsterPropertie = &TmpMonsterInfo.m_Propertie;
+
+		switch (nType)
+		{
+			case 0:
+				pMonsterPropertie->X = x;
+				break;
+			case 1:
+				pMonsterPropertie->Y = y;
+				break;
+			case 2:
+				pMonsterPropertie->X = x;
+				break;
+			case 3:
+				pMonsterPropertie->Y = y;
+				break;
+			case 4:
+				//pMonsterPropertie->X = x;
+				break;
+			default:
+				break;
+		}
+
+		LMonsterInfo.SetAt(prevPos, TmpMonsterInfo);
+
+		tmpPos = m_MonsterInfoSel[nInc++];
+	}
+
 }

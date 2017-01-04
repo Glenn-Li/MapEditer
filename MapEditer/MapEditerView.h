@@ -26,9 +26,10 @@ public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 protected:
 	virtual void OnInitialUpdate(); // 构造后第一次调用
-	CPoint m_ptPrev;       // the last mouse pt in the stroke in progress
-	CPoint m_ptPrev1;
-	CPoint m_LastPt;
+	BOOL m_startRect = FALSE;
+	CPoint m_ptPrev = 0;       // the last mouse pt in the stroke in progress
+	CPoint m_ptPrev1 = 0;
+	CPoint m_LastPt = 0;
 
 	POSITION m_MonsterSel;
 	int m_nColor;
@@ -54,6 +55,7 @@ protected:
 
 private:
 	void DrawGrid(CDC* pDC, CMapEditerDoc* pDoc);
+	void CMapEditerView::DrawSelRect(CDC* pDC, CMapEditerDoc* pDoc);
 	void CMapEditerView::DisplayMonsterInfo(CDC* pDC, CMapEditerDoc* pDoc);
 public:
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
@@ -63,6 +65,13 @@ public:
 	afx_msg void OnMonsterAdd();
 	afx_msg void OnMonsterDel();
 	afx_msg void OnMonsterCheck();
+
+	void CMapEditerView::DoAlign(int nType);
+	afx_msg void OnLeftAlign();
+	afx_msg void OnTopAlign();
+	afx_msg void OnRightAlign();
+	afx_msg void OnBottomAlign();
+	afx_msg void OnCenterAlign();
 };
 
 #ifndef _DEBUG  // MapEditerView.cpp 中的调试版本

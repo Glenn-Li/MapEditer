@@ -44,6 +44,7 @@ struct MapWrdHead
 	unsigned __int32 A1;
 	unsigned __int32 A2;
 	unsigned __int32 MapLength;
+	unsigned __int32 MapWigth;
 };
 #pragma pack()
 

@@ -32,6 +32,11 @@ BEGIN_MESSAGE_MAP(CMapEditerView, CScrollView)
 	ON_COMMAND(ID_MONSTER_ADD, OnMonsterAdd)
 	ON_COMMAND(ID_MONSTER_DEL, OnMonsterDel)
 	ON_COMMAND(ID_MONSTER_CHECK, OnMonsterCheck)
+	ON_COMMAND(ID_LEFT_ALIGN, OnLeftAlign)
+	ON_COMMAND(ID_TOP_ALIGN, OnTopAlign)
+	ON_COMMAND(ID_RIGHT_ALIGN, OnRightAlign)
+	ON_COMMAND(ID_BOTTOM_ALIGN, OnBottomAlign)
+	ON_COMMAND(ID_CENTER_ALIGN, OnCenterAlign)
 END_MESSAGE_MAP()
 
 // CMapEditerView 构造/析构
@@ -39,8 +44,6 @@ END_MESSAGE_MAP()
 CMapEditerView::CMapEditerView()
 {
 	// TODO:  在此处添加构造代码
-	//MapLength = GetMapLength() * 16;
-	//MapHeigth = 55 * 16;
 
 	m_MonsterSel = NULL;
 
@@ -98,6 +101,9 @@ void CMapEditerView::OnDraw(CDC* pDC)
 	DrawGrid(&dcMem, pDoc);
 
 	DisplayMonsterInfo(&dcMem, pDoc);
+
+	if (m_startRect == TRUE)
+		DrawSelRect(&dcMem, pDoc);
 
 	pDC->BitBlt(0, 0, pDoc->MapLength, pDoc->MapHeigth, &dcMem, 0, 0, SRCCOPY);//将内存DC上的图象拷贝到前台
 
@@ -176,6 +182,18 @@ void CMapEditerView::DrawGrid(CDC* pDC, CMapEditerDoc* pDoc)
 	//DeleteObject(brush);
 }
 
+void CMapEditerView::DrawSelRect(CDC* pDC, CMapEditerDoc* pDoc)
+{
+	CPen pen;
+	pen.CreatePen(PS_SOLID, 1, RGB(0, 0, 255));
+	pDC->SelectObject(pen);
+	CBrush *pBrush = CBrush::FromHandle((HBRUSH)GetStockObject(NULL_BRUSH));
+	pDC->SelectObject(pBrush);
+
+	pDC->Rectangle(CRect(m_ptPrev, m_ptPrev1));
+	DeleteObject(pen);
+}
+
 void CMapEditerView::DisplayMonsterInfo(CDC* pDC, CMapEditerDoc* pDoc)
 {
 	POSITION pos;
@@ -238,7 +256,7 @@ void CMapEditerView::OnLButtonUp(UINT nFlags, CPoint point)
 // 	int Y = point.y * MONSTER_POS_RATIO;
 
 	POSITION pos;
-	CRect rectReflash;
+	CRect rectSel;
 	struct MonsterPropertie* pMonsterPropertie;
 
 	CClientDC dc(this);
@@ -246,18 +264,9 @@ void CMapEditerView::OnLButtonUp(UINT nFlags, CPoint point)
 	dc.DPtoLP(&point);
 	m_LastPt = point;
 
-	if (pDoc->GetMonstersRect(point, &pos, &pMonsterPropertie))
+	if (pDoc->GetMonstersRect(point, &pos, &pMonsterPropertie, 1))
 	{
 		pDoc->UpdatePropertiesView(pos);
-
-		rectReflash.left = pMonsterPropertie->X;
-		rectReflash.top = pMonsterPropertie->Y;
-		rectReflash.right = pMonsterPropertie->X + MONSTER_SIZE;
-		rectReflash.bottom = pMonsterPropertie->Y + MONSTER_SIZE;
-
-		dc.LPtoDP(&rectReflash);		//注意：LPtoDP
-
-		//InvalidateRect(rectReflash);
 
 		Invalidate();
 	}
@@ -265,8 +274,14 @@ void CMapEditerView::OnLButtonUp(UINT nFlags, CPoint point)
 	if (GetCapture() != this)
 		return;
 
+	if (m_startRect == TRUE)
+	{
+		pDoc->MarkMonstersInRect(m_ptPrev, point);
+	}
+
 	ReleaseCapture();
 	m_MonsterSel = NULL;
+	m_startRect = FALSE;
 
 	CScrollView::OnLButtonUp(nFlags, point);
 }
@@ -293,7 +308,7 @@ void CMapEditerView::OnLButtonDown(UINT nFlags, CPoint point)
 	POSITION pos, posPrev;
 	struct MonsterPropertie* pMonsterPropertie;
 
-	if (pDoc->GetMonstersRect(point, &pos, &pMonsterPropertie))
+	if (pDoc->GetMonstersRect(point, &pos, &pMonsterPropertie, 0))
 	{
 		posPrev = pos;
 		struct MonsterInfo m_MonsterInfo = pDoc->LMonsterInfo.GetNext(pos);
@@ -308,6 +323,10 @@ void CMapEditerView::OnLButtonDown(UINT nFlags, CPoint point)
 			m_nMonster_Y = pMonsterPropertie->Y;
 		}
 	}
+	else
+	{
+		m_startRect = TRUE;
+	}
 
 	CScrollView::OnLButtonDown(nFlags, point);
 }
@@ -317,7 +336,10 @@ void CMapEditerView::OnMouseMove(UINT nFlags, CPoint point)
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 	if (GetCapture() != this)
+	{
+		Invalidate();
 		return;
+	}
 
 	CMapEditerDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
@@ -332,33 +354,66 @@ void CMapEditerView::OnMouseMove(UINT nFlags, CPoint point)
 
 	if (m_MonsterSel)
 	{
-		int offset_x = point.x - m_ptPrev.x;
-		int offset_y = point.y - m_ptPrev.y;
+		int offset_x = point.x - m_ptPrev1.x;
+		int offset_y = point.y - m_ptPrev1.y;
 
 		// Update MonsterInfo
-		POSITION tmpPos = m_MonsterSel;
-		struct MonsterInfo m_MonsterInfo = pDoc->LMonsterInfo.GetNext(tmpPos);
-		struct MonsterPropertie* pMonsterPropertie = &m_MonsterInfo.m_Propertie;
+		POSITION pos, prevPos;
 
-		//TRACE("X,Y = %d,%d\n", m_MonsterInfo.X, m_MonsterInfo.Y);
-		pMonsterPropertie->X = m_nMonster_X + offset_x * MONSTER_POS_RATIO;
-		pMonsterPropertie->Y = m_nMonster_Y + offset_y * MONSTER_POS_RATIO;
-		//TRACE("X,Y = %d,%d\n", m_MonsterInfo.X, m_MonsterInfo.Y);
-		pDoc->LMonsterInfo.SetAt(m_MonsterSel, m_MonsterInfo);
+		struct MonsterInfo m_MonsterInfo;
+		struct MonsterPropertie* pMonsterPropertie = NULL;
+
+		int nInc = 0;
+//		int x, y;
+
+		if (pDoc->LMonsterInfo.GetCount() == 0 || pDoc->m_MonsterInfoSel[0] == NULL)
+			return;
+
+		pos = pDoc->m_MonsterInfoSel[nInc++];
+		while (pos != NULL)
+		{
+			prevPos = pos;
+			m_MonsterInfo = pDoc->LMonsterInfo.GetNext(pos);
+			pMonsterPropertie = &m_MonsterInfo.m_Propertie;
+
+			//TRACE("X,Y = %d,%d\n", m_MonsterInfo.X, m_MonsterInfo.Y);
+			//pMonsterPropertie->X = m_nMonster_X + offset_x * MONSTER_POS_RATIO;
+			//pMonsterPropertie->Y = m_nMonster_Y + offset_y * MONSTER_POS_RATIO;
+			pMonsterPropertie->X += offset_x * MONSTER_POS_RATIO;
+			pMonsterPropertie->Y += offset_y * MONSTER_POS_RATIO;
+			//TRACE("X,Y = %d,%d\n", m_MonsterInfo.X, m_MonsterInfo.Y);
+			pDoc->LMonsterInfo.SetAt(prevPos, m_MonsterInfo);
 
 
+			pos = pDoc->m_MonsterInfoSel[nInc++];
+		}
 
-		rectReflash.left = min(m_ptPrev1.x - MONSTER_SIZE, point.x);
-		rectReflash.top = min(m_ptPrev1.y - MONSTER_SIZE, point.y);
-		rectReflash.right = max(m_ptPrev1.x + MONSTER_SIZE, point.x);
-		rectReflash.bottom = max(m_ptPrev1.y + MONSTER_SIZE, point.y);
+
+// 		POSITION tmpPos = m_MonsterSel;
+// 		struct MonsterInfo m_MonsterInfo = pDoc->LMonsterInfo.GetNext(tmpPos);
+// 		struct MonsterPropertie* pMonsterPropertie = &m_MonsterInfo.m_Propertie;
+// 
+// 		//TRACE("X,Y = %d,%d\n", m_MonsterInfo.X, m_MonsterInfo.Y);
+// 		pMonsterPropertie->X = m_nMonster_X + offset_x * MONSTER_POS_RATIO;
+// 		pMonsterPropertie->Y = m_nMonster_Y + offset_y * MONSTER_POS_RATIO;
+// 		//TRACE("X,Y = %d,%d\n", m_MonsterInfo.X, m_MonsterInfo.Y);
+// 		pDoc->LMonsterInfo.SetAt(m_MonsterSel, m_MonsterInfo);
+
+// 		rectReflash.left = min(m_ptPrev1.x - MONSTER_SIZE, point.x);
+// 		rectReflash.top = min(m_ptPrev1.y - MONSTER_SIZE, point.y);
+// 		rectReflash.right = max(m_ptPrev1.x + MONSTER_SIZE, point.x);
+// 		rectReflash.bottom = max(m_ptPrev1.y + MONSTER_SIZE, point.y);
 
 		dc.LPtoDP(&rectReflash);		//注意：LPtoDP
 
 		//InvalidateRect(rectReflash);
+	}
+
+// 	if (m_startRect)
+// 	{
 		Invalidate();
 		m_ptPrev1 = point;
-	}
+/*	}*/
 
 	CScrollView::OnMouseMove(nFlags, point);
 }
@@ -439,9 +494,8 @@ void CMapEditerView::OnMonsterAdd()
 void CMapEditerView::OnMonsterDel()
 {
 	//AfxMessageBox(_T("Del"));
-	POSITION pos, posPrev;
+	POSITION pos, prevPos;
 	CRect rectReflash;
-	int i;
 	CMapEditerDoc* pDoc = GetDocument();
 	ASSERT_VALID(pDoc);
 	if (!pDoc)
@@ -450,21 +504,32 @@ void CMapEditerView::OnMonsterDel()
 	struct MonsterInfo m_MonsterInfo;
 	struct MonsterPropertie* pMonsterPropertie = NULL;
 
-	if (pDoc->GetMonstersRect(m_LastPt, &pos, &pMonsterPropertie))
+	int nInc = 0;
+	//int x, y;
+
+	if (pDoc->LMonsterInfo.GetCount() == 0 || pDoc->m_MonsterInfoSel[0] == NULL)
+		return;
+
+	pos = pDoc->m_MonsterInfoSel[nInc++];
+	while (pos != NULL)
 	{
-		posPrev = pos;
+		prevPos = pos;
 		m_MonsterInfo = pDoc->LMonsterInfo.GetNext(pos);
-		
-		rectReflash.left = pMonsterPropertie->X / MONSTER_POS_RATIO;
-		rectReflash.top = pMonsterPropertie->Y / MONSTER_POS_RATIO;
-		rectReflash.right = pMonsterPropertie->X / MONSTER_POS_RATIO + MONSTER_SIZE * 2;
-		rectReflash.bottom = pMonsterPropertie->Y / MONSTER_POS_RATIO + MONSTER_SIZE * 2;
 
-		// 删除这个节点
-
-		pDoc->LMonsterInfo.RemoveAt(posPrev);
+		pDoc->LMonsterInfo.RemoveAt(prevPos);
 		pDoc->m_MapBinHead.MonsterCount--;
+		pos = pDoc->m_MonsterInfoSel[nInc++];
 	}
+
+// 	if (pDoc->GetMonstersRect(m_LastPt, &pos, &pMonsterPropertie))
+// 	{
+// 		posPrev = pos;
+// 		m_MonsterInfo = pDoc->LMonsterInfo.GetNext(pos);
+// 
+// 		// 删除这个节点
+// 		pDoc->LMonsterInfo.RemoveAt(posPrev);
+// 		pDoc->m_MapBinHead.MonsterCount--;
+// 	}
 
 	//InvalidateRect(rectReflash);
 	Invalidate();
@@ -473,4 +538,42 @@ void CMapEditerView::OnMonsterDel()
 void CMapEditerView::OnMonsterCheck()
 {
 	AfxMessageBox(_T("check"));
+}
+
+void CMapEditerView::DoAlign(int nType)
+{
+	CMapEditerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (!pDoc)
+		return;
+
+	pDoc->OnAlignSelectMonsters(nType);
+
+	Invalidate();
+
+}
+
+void CMapEditerView::OnLeftAlign()
+{
+	DoAlign(0);
+}
+
+void CMapEditerView::OnTopAlign()
+{
+	DoAlign(1);
+}
+
+void CMapEditerView::OnRightAlign()
+{
+	DoAlign(2);
+}
+
+void CMapEditerView::OnBottomAlign()
+{
+	DoAlign(3);
+}
+
+void CMapEditerView::OnCenterAlign()
+{
+	DoAlign(4);
 }

@@ -132,6 +132,11 @@ BEGIN
     BUTTON      ID_MONSTER_ADD
     BUTTON      ID_MONSTER_DEL
     BUTTON      ID_MONSTER_CHECK
+    BUTTON      ID_LEFT_ALIGN
+    BUTTON      ID_TOP_ALIGN
+    BUTTON      ID_RIGHT_ALIGN
+    BUTTON      ID_BOTTOM_ALIGN
+    BUTTON      ID_CENTER_ALIGN
 END
 
 IDR_SORT TOOLBAR 16, 15
@@ -533,6 +538,11 @@ BEGIN
     ID_MONSTER_ADD          "增加"
     ID_MONSTER_DEL          "删除"
     ID_MONSTER_CHECK        "查找"
+    ID_LEFT_ALIGN           "左对齐"
+    ID_TOP_ALIGN            "顶部对其"
+    ID_RIGHT_ALIGN          "右对齐"
+    ID_BOTTOM_ALIGN         "右对齐"
+    ID_CENTER_ALIGN         "居中对其"
 END
 
 #endif    // 中文(简体，中国) resources

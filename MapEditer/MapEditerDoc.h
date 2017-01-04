@@ -34,16 +34,18 @@ public:
 
 // ²Ù×÷
 public:
-	int GetMapLength();
+	int GetMapSize();
 	int GetMonsterCount();
 	void GetMonstersInfo();
 	void MonstersAnalysis();
 	void CMapEditerDoc::SaveMonstersInfo();
 	void CMapEditerDoc::OnOpenNewDoc(CString strFileName);
 	void CMapEditerDoc::UpdatePropertiesView(POSITION pos);
-	BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos, struct MonsterPropertie** pMonsterPropertie);
+	BOOL CMapEditerDoc::GetMonstersRect(CPoint point, POSITION* pos, struct MonsterPropertie** pMonsterPropertie, int nFlag);
 	void CMapEditerDoc::CreatMonsterRect(struct MonsterInfo* pMonsterInfo, struct MonsterBlock* pMonsterBlock);
 	BOOL MonsterInfoCompare(struct MonsterInfo* pSrc, struct MonsterInfo* pSrc1);
+	void MarkMonstersInRect(CPoint m_ptPrev, CPoint m_ptLast);
+	void OnAlignSelectMonsters(int nType);
 
 // ÖØÐ´
 public:
