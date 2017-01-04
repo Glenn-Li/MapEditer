@@ -20,7 +20,6 @@ public:
 	CString MapFileName;
 	int MapLength = 0;
 	int MapHeigth = 0;
-	int MonstersCount = 0;
 	struct MapBinHead m_MapBinHead;
 	CList <MonsterInfo, MonsterInfo&> LMonsterInfo;
 	unsigned char MapFileEnd[4*1024];

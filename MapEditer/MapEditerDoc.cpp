@@ -56,6 +56,7 @@ BOOL CMapEditerDoc::OnNewDocument()
 	// TODO:  在此添加重新初始化代码
 	// (SDI 文档将重用该文档)
 	GetMapSize();
+	//GetMonsterCount();
 	MapLength = MapLength * MAP_SIZE_RATIO;
 	MapHeigth = MapHeigth * MAP_SIZE_RATIO;
 
@@ -207,7 +208,6 @@ int CMapEditerDoc::GetMapSize()
 int CMapEditerDoc::GetMonsterCount()
 {
 	CString strPathName;
-	int MapLength = 0;
 	int ret = 0;
 
 	strPathName = MapFileFolder + MapFileName;
@@ -220,7 +220,7 @@ int CMapEditerDoc::GetMonsterCount()
 	else
 	{
 		CString errormessage;
-		AfxMessageBox(_T("WRD文件不存在！"));
+		AfxMessageBox(_T("BIN文件不存在！"));
 		return 0;
 	}
 
@@ -230,12 +230,12 @@ int CMapEditerDoc::GetMonsterCount()
 	ret = sizeof(m_MapBinHead);
 	ret = iar.Read(&m_MapBinHead, sizeof(m_MapBinHead));
 	if (ret > 0)
-		MonstersCount = m_MapBinHead.MonsterCount;
+		MonstersCounter = m_MapBinHead.MonsterCount;
 
 	iar.Close();
 	iFile.Close();
 
-	return MonstersCount;
+	return MonstersCounter;
 }
 
 void CMapEditerDoc::MonstersAnalysis()
@@ -298,8 +298,8 @@ void CMapEditerDoc::GetMonstersInfo()
 
 		if (TmpMonsterPropertie->Flag == 0)
 		{
-			LMonsterInfo.AddTail(TmpMonsterInfo);
-			continue;
+// 			LMonsterInfo.AddTail(TmpMonsterInfo);
+// 			continue;
 			// 按升序插入
 			if (LMonsterInfo.GetCount() == 0)
 			{
@@ -378,11 +378,12 @@ void CMapEditerDoc::OnOpenNewDoc(CString strFileName)
 {
 	MapFileName = strFileName;
 
-	GetMapSize();
-	MapLength = MapLength * MAP_SIZE_RATIO;
-	MapHeigth = MapHeigth * MAP_SIZE_RATIO;
+ 	GetMapSize();
+ 	//GetMonsterCount();
+ 	MapLength = MapLength * MAP_SIZE_RATIO;
+ 	MapHeigth = MapHeigth * MAP_SIZE_RATIO;
 
-	GetMonstersInfo();
+ 	GetMonstersInfo();
 
 	UpdateAllViews(NULL);
 }
