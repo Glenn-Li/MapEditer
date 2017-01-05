@@ -15,8 +15,10 @@
 #define MONSTER_SIZE	32
 #define ID_POS			8
 
-//#define DEFAULT_PATH _T("F:\\26-HCSG\\µØÍ¼ÑÐ¾¿\\data\\")
-#define DEFAULT_PATH _T("F:\\26-HCSG\\data\\")
+//#define DEFAULT_PATH _T("D:\\sgserver\\data-test\\351\\")
+#define DEFAULT_PATH _T(".\\data\\")
+#define DEFAULT_BIN_FILE _T("LEVEL351.BIN")
+//#define DEFAULT_PATH _T("F:\\26-HCSG\\data\\")
 
 #pragma pack(1)
 struct MonsterPropertie

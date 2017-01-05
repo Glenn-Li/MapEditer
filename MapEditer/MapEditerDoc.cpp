@@ -39,7 +39,7 @@ CMapEditerDoc::CMapEditerDoc()
 	//MapFileFolder = ".\\data\\";
 	memset(&m_AddMonsterInfo, 0, sizeof(struct MonsterInfo));
 	MapFileFolder = DEFAULT_PATH;
-	MapFileName = "LEVEL001.BIN";
+	MapFileName = DEFAULT_BIN_FILE;
 	PosSel = NULL;
 	PosSelPrev = PosSel;
 
@@ -302,8 +302,11 @@ void CMapEditerDoc::GetMonstersInfo()
 
 		if (TmpMonsterPropertie->Flag == 0)
 		{
-// 			LMonsterInfo.AddTail(TmpMonsterInfo);
-// 			continue;
+			// test
+			// 压缩赤壁战场地图用
+			//TmpMonsterPropertie->X /= 2;
+ 			LMonsterInfo.AddTail(TmpMonsterInfo);
+ 			continue;
 			// 按升序插入
 			if (LMonsterInfo.GetCount() == 0)
 			{
