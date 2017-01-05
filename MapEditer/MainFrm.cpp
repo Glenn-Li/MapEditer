@@ -26,6 +26,7 @@ BEGIN_MESSAGE_MAP(CMainFrame, CFrameWndEx)
 	ON_COMMAND_RANGE(ID_VIEW_APPLOOK_WIN_2000, ID_VIEW_APPLOOK_WINDOWS_7, &CMainFrame::OnApplicationLook)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_VIEW_APPLOOK_WIN_2000, ID_VIEW_APPLOOK_WINDOWS_7, &CMainFrame::OnUpdateApplicationLook)
 	ON_WM_SETTINGCHANGE()
+	ON_COMMAND(ID_FILE_OPEN, OnFileOpen)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -407,4 +408,37 @@ void CMainFrame::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 {
 	CFrameWndEx::OnSettingChange(uFlags, lpszSection);
 	m_wndOutput.UpdateFonts();
+}
+
+void CMainFrame::OnFileOpen()
+{
+	BROWSEINFO bi;
+	TCHAR Buffer[512];
+	CString strDir;
+	//初始化入口参数bi开始
+	bi.hwndOwner = NULL;
+	bi.pidlRoot = NULL;
+	bi.pszDisplayName = Buffer;//此参数如为NULL则不能显示对话框
+	bi.lpszTitle = _T("选择输出目录");
+	bi.ulFlags = BIF_RETURNONLYFSDIRS;
+	bi.lpfn = NULL;
+	bi.iImage = 0;
+	//初始化入口参数bi结束
+	LPITEMIDLIST pIDList = SHBrowseForFolder(&bi);//调用显示选择对话框
+	if (pIDList)//选择到路径(即：点了确定按钮)
+	{
+		//取得文件夹路径到Buffer里
+		SHGetPathFromIDList(pIDList, Buffer);
+		strDir = Buffer;
+
+		CMapEditerDoc *pDoc = (CMapEditerDoc*)GetActiveDocument();
+		ASSERT(pDoc);
+
+		pDoc->OnUpdateFileView(strDir);
+
+	}
+	else
+	{
+		return;
+	}
 }

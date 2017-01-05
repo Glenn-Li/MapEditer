@@ -29,6 +29,7 @@ BEGIN_MESSAGE_MAP(CMapEditerView, CScrollView)
 	ON_WM_LBUTTONUP()
 	ON_WM_LBUTTONDOWN()
 	ON_WM_MOUSEMOVE()
+	ON_COMMAND(ID_MONSTER_COPY, OnMonsterCopy)
 	ON_COMMAND(ID_MONSTER_ADD, OnMonsterAdd)
 	ON_COMMAND(ID_MONSTER_DEL, OnMonsterDel)
 	ON_COMMAND(ID_MONSTER_CHECK, OnMonsterCheck)
@@ -267,6 +268,7 @@ void CMapEditerView::OnLButtonUp(UINT nFlags, CPoint point)
 	if (pDoc->GetMonstersRect(point, &pos, &pMonsterPropertie, 1))
 	{
 		pDoc->UpdatePropertiesView(pos);
+		nAddCount = 0;
 
 		Invalidate();
 	}
@@ -326,6 +328,7 @@ void CMapEditerView::OnLButtonDown(UINT nFlags, CPoint point)
 	else
 	{
 		m_startRect = TRUE;
+		pDoc->PosSel = NULL;
 	}
 
 	CScrollView::OnLButtonDown(nFlags, point);
@@ -418,9 +421,9 @@ void CMapEditerView::OnMouseMove(UINT nFlags, CPoint point)
 	CScrollView::OnMouseMove(nFlags, point);
 }
 
-void CMapEditerView::OnMonsterAdd()
+void CMapEditerView::OnMonsterCopy()
 {
-	//AfxMessageBox(_T("ADD"));
+	//AfxMessageBox(_T("COPY"));
 	POSITION pos, posPrev;
 	int i;
 	CMapEditerDoc* pDoc = GetDocument();
@@ -439,8 +442,9 @@ void CMapEditerView::OnMonsterAdd()
 		struct MonsterInfo m_MonsterInfo = pDoc->LMonsterInfo.GetNext(posPrev);
 		struct MonsterPropertie* pMonsterPropertie = &m_MonsterInfo.m_Propertie;
 		TmpMonsterPropertie->Id = pMonsterPropertie->Id;
-		TmpMonsterPropertie->X = pMonsterPropertie->X;// +MONSTER_SIZE * MONSTER_POS_RATIO / 2;
-		TmpMonsterPropertie->Y = pMonsterPropertie->Y;// +MONSTER_SIZE * MONSTER_POS_RATIO / 2;
+		nAddCount++;
+		TmpMonsterPropertie->X = pMonsterPropertie->X + (MONSTER_SIZE * MONSTER_POS_RATIO / 2) * nAddCount;
+		TmpMonsterPropertie->Y = pMonsterPropertie->Y + (MONSTER_SIZE * MONSTER_POS_RATIO / 2) * nAddCount;
 	}
 	else
 	{
@@ -489,6 +493,22 @@ void CMapEditerView::OnMonsterAdd()
 
 	//InvalidateRect(rectReflash);
 	Invalidate();
+}
+
+
+void CMapEditerView::OnMonsterAdd()
+{
+	//AfxMessageBox(_T("ADD"));
+	POSITION pos, posPrev;
+	int i;
+	CMapEditerDoc* pDoc = GetDocument();
+	ASSERT_VALID(pDoc);
+	if (!pDoc)
+		return;
+
+	CDlgAddMonster m_DlgAddMonster;
+	m_DlgAddMonster.DoModal();
+
 }
 
 void CMapEditerView::OnMonsterDel()

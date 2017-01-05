@@ -20,6 +20,7 @@ public:
 
 // ²Ù×÷
 public:
+	void CMainFrame::OnFileOpen();
 
 // ÖØÐ´
 public:

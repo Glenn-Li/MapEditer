@@ -103,6 +103,7 @@
   <ItemGroup>
     <ClInclude Include="ClassView.h" />
     <ClInclude Include="comlib.h" />
+    <ClInclude Include="DlgAddMonster.h" />
     <ClInclude Include="FileView.h" />
     <ClInclude Include="MainFrm.h" />
     <ClInclude Include="MapEditer.h" />
@@ -118,6 +119,7 @@
   <ItemGroup>
     <ClCompile Include="ClassView.cpp" />
     <ClCompile Include="comlib.cpp" />
+    <ClCompile Include="DlgAddMonster.cpp" />
     <ClCompile Include="FileView.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="MapEditer.cpp" />

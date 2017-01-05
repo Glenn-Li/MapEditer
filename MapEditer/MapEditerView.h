@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "DlgAddMonster.h"
+
 
 class CMapEditerView : public CScrollView
 {
@@ -36,6 +38,8 @@ protected:
 	int m_nMonster_X;
 	int m_nMonster_Y;
 
+	int nAddCount = 0;
+
 // й╣ож
 public:
 	virtual ~CMapEditerView();
@@ -62,6 +66,7 @@ public:
 	afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void OnMouseMove(UINT nFlags, CPoint point);
+	afx_msg void OnMonsterCopy();
 	afx_msg void OnMonsterAdd();
 	afx_msg void OnMonsterDel();
 	afx_msg void OnMonsterCheck();

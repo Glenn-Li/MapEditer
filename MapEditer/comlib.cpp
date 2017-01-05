@@ -15,3 +15,15 @@ CString nTos(int n)
 		return str;
 	}
 }
+
+struct MonsterInfo m_AddMonsterInfo;
+
+void GetAddMonsterInfo(struct MonsterInfo* m_MonsterInfo)
+{
+	m_MonsterInfo->m_Propertie = m_AddMonsterInfo.m_Propertie;
+}
+
+void SetAddMonsterInfo(struct MonsterInfo* m_MonsterInfo)
+{
+	m_AddMonsterInfo.m_Propertie = m_MonsterInfo->m_Propertie;
+}
