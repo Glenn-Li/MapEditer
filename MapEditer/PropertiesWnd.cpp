@@ -37,6 +37,7 @@ BEGIN_MESSAGE_MAP(CPropertiesWnd, CDockablePane)
 	ON_UPDATE_COMMAND_UI(ID_PROPERTIES2, OnUpdateProperties2)
 	ON_WM_SETFOCUS()
 	ON_WM_SETTINGCHANGE()
+	ON_REGISTERED_MESSAGE(AFX_WM_PROPERTY_CHANGED, OnPropertyChanged)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -146,6 +147,7 @@ void CPropertiesWnd::OnUpdateSortProperties(CCmdUI* pCmdUI)
 	CMapEditerDoc *pDoc = GetDocument();
 	pCmdUI->SetCheck(m_wndPropList.IsAlphabeticMode());
 
+	/* 此处会不停的刷新，从这里读取当前选中的monster，把属性更新显示，不好，存在问题 */
 	if (!pDoc->PosSel)
 		return;
 
@@ -161,7 +163,7 @@ void CPropertiesWnd::OnProperties1()
 	// TODO:  在此处添加命令处理程序代码
 }
 
-void CPropertiesWnd::OnUpdateProperties1(CCmdUI* /*pCmdUI*/)
+void CPropertiesWnd::OnUpdateProperties1(CCmdUI* pCmdUI)
 {
 	// TODO:  在此处添加命令更新 UI 处理程序代码
 }
@@ -186,11 +188,11 @@ void CPropertiesWnd::InitPropList()
 	m_wndPropList.SetVSDotNetLook();
 	m_wndPropList.MarkModifiedProperties();
 
-	pGroupBase = new CMFCPropertyGridProperty(_T("基本"));
+	pGroupBase = new CMFCPropertyGridProperty(MONSERT_BASE);
 
-	pGroupBase->AddSubItem(new CMFCPropertyGridProperty(_T("ID"), (_variant_t)250l, _T("怪物ID")));
-	pGroupBase->AddSubItem(new CMFCPropertyGridProperty(_T("X坐标"), (_variant_t)0l, _T("X坐标")));
-	pGroupBase->AddSubItem(new CMFCPropertyGridProperty(_T("Y坐标"), (_variant_t)0l, _T("Y坐标")));
+	pGroupBase->AddSubItem(new CMFCPropertyGridProperty(MONSTER_ID, (_variant_t)250l, MONSTER_ID_D));
+	pGroupBase->AddSubItem(new CMFCPropertyGridProperty(MONSTER_POS_X, (_variant_t)0l, MONSTER_POS_X_D));
+	pGroupBase->AddSubItem(new CMFCPropertyGridProperty(MONSTER_POS_Y, (_variant_t)0l, MONSTER_POS_Y_D));
 
 // 	CMFCPropertyGridProperty* pProp = new CMFCPropertyGridProperty(_T("边框"), _T("对话框外框"), _T("其中之一: “无”、“细”、“可调整大小”或“对话框外框”"));
 // 	pProp->AddOption(_T("无"));
@@ -204,34 +206,34 @@ void CPropertiesWnd::InitPropList()
 
 	m_wndPropList.AddProperty(pGroupBase);
 
-	pGroupToMap = new CMFCPropertyGridProperty(_T("传送"), 0, FALSE);
+	pGroupToMap = new CMFCPropertyGridProperty(MONSTER_TRANSFER, 0, FALSE);
 
-	pProp = new CMFCPropertyGridProperty(_T("传送到地图ID"), (_variant_t) 1l, _T("传送到地图ID"));
+	pProp = new CMFCPropertyGridProperty(MONSTER_TRANS_MAP_ID, (_variant_t)1l, MONSTER_TRANS_MAP_ID_D);
 	//pProp->EnableSpinControl(TRUE, 50, 300);
 	pGroupToMap->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("传送X坐标"), (_variant_t) 0l, _T("传送X坐标"));
+	pProp = new CMFCPropertyGridProperty(MONSTER_TRANS_MAP_X, (_variant_t)0l, MONSTER_TRANS_MAP_X_D);
 	pProp->EnableSpinControl(TRUE, 0, 55);
 	pGroupToMap->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty(_T("传送Y坐标"), (_variant_t)0l, _T("传送Y坐标"));
+	pProp = new CMFCPropertyGridProperty(MONSTER_TRANS_MAP_Y, (_variant_t)0l, MONSTER_TRANS_MAP_Y_D);
 	pProp->EnableSpinControl(TRUE, 0, 1000);
 	pGroupToMap->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty(_T("商店传送ID"), (_variant_t)0l, _T("商店传送ID"));
+	pProp = new CMFCPropertyGridProperty(MONSTER_TRANS_SHOP_ID, (_variant_t)0l, MONSTER_TRANS_SHOP_ID_D);
 	//pProp->EnableSpinControl(TRUE, 50, 200);
 	pGroupToMap->AddSubItem(pProp);
 
 	m_wndPropList.AddProperty(pGroupToMap);
 
 
-	pGroupNPC = new CMFCPropertyGridProperty(_T("NPC"), 0, FALSE);
+	pGroupNPC = new CMFCPropertyGridProperty(MONSTER_NPC, 0, FALSE);
 
-	pProp = new CMFCPropertyGridProperty(_T("NPC ID"), (_variant_t)1l, _T("NPC ID"));
+	pProp = new CMFCPropertyGridProperty(MONSTER_NPC_ID, (_variant_t)1l, MONSTER_NPC_ID_D);
 	//pProp->EnableSpinControl(TRUE, 50, 300);
 	pGroupNPC->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty(_T("资源ID"), (_variant_t)0l, _T("资源ID"));
+	pProp = new CMFCPropertyGridProperty(MONSTER_RES_ID, (_variant_t)0l, MONSTER_RES_ID_D);
 	pProp->EnableSpinControl(TRUE, 0, 55);
 	pGroupNPC->AddSubItem(pProp);
 
@@ -296,6 +298,64 @@ void CPropertiesWnd::OnSettingChange(UINT uFlags, LPCTSTR lpszSection)
 {
 	CDockablePane::OnSettingChange(uFlags, lpszSection);
 	SetPropListFont();
+}
+
+LRESULT CPropertiesWnd::OnPropertyChanged(__in WPARAM wparam, __in LPARAM lparam)
+{
+	TRACE(_T("PropertyChanged\n"));
+	CMFCPropertyGridProperty* pProperty = (CMFCPropertyGridProperty*) lparam;
+	CMapEditerDoc *pDoc = GetDocument();
+
+	if (!pDoc->PosSelPrev)
+		return 0;
+
+	POSITION tmpPos = pDoc->PosSelPrev;
+	MonsterInfo m_MonsterInfo = pDoc->LMonsterInfo.GetNext(tmpPos);
+	struct MonsterPropertie* pMonsterPropertie = &m_MonsterInfo.m_Propertie;
+
+	CString strName = pProperty->GetName();
+
+	if (strName == MONSTER_ID)
+	{
+		pMonsterPropertie->Id = pProperty->GetValue().iVal;
+	}
+	else if (strName == MONSTER_POS_X)
+	{
+		pMonsterPropertie->X = pProperty->GetValue().iVal;
+	}
+	else if (strName == MONSTER_POS_Y)
+	{
+		pMonsterPropertie->Y = pProperty->GetValue().iVal;
+	}
+	else if (strName == MONSTER_TRANS_MAP_ID)
+	{
+		pMonsterPropertie->ToMapId = pProperty->GetValue().iVal;
+	}
+	else if (strName == MONSTER_TRANS_MAP_X)
+	{
+		pMonsterPropertie->ToMapX = pProperty->GetValue().iVal;
+	}
+	else if (strName == MONSTER_TRANS_MAP_Y)
+	{
+		pMonsterPropertie->ToMapY = pProperty->GetValue().iVal;
+	}
+	else if (strName == MONSTER_TRANS_SHOP_ID)
+	{
+		pMonsterPropertie->ToShop = pProperty->GetValue().iVal;
+	}
+	else if (strName == MONSTER_NPC_ID)
+	{
+		pMonsterPropertie->NpcTalkId = pProperty->GetValue().iVal;
+	}
+	else if (strName == MONSTER_RES_ID)
+	{
+		pMonsterPropertie->ResNameId = pProperty->GetValue().iVal;
+	}
+
+	pDoc->LMonsterInfo.SetAt(pDoc->PosSelPrev, m_MonsterInfo);
+
+	pDoc->OnUpdateViews();
+	return 0;
 }
 
 void CPropertiesWnd::SetPropListFont()

@@ -37,9 +37,11 @@ CMapEditerDoc::CMapEditerDoc()
 {
 	// TODO:  在此添加一次性构造代码
 	//MapFileFolder = ".\\data\\";
-	MapFileFolder = "F:\\Game\\三国-本地测试\\data\\";
+	memset(&m_AddMonsterInfo, 0, sizeof(struct MonsterInfo));
+	MapFileFolder = DEFAULT_PATH;
 	MapFileName = "LEVEL001.BIN";
 	PosSel = NULL;
+	PosSelPrev = PosSel;
 
 	memset(m_MonsterInfoSel, 0, sizeof(m_MonsterInfoSel));
 }
@@ -64,6 +66,8 @@ BOOL CMapEditerDoc::OnNewDocument()
 	memset(m_MonsterInfoSel, 0, sizeof(m_MonsterInfoSel));
 
 	GetMonstersInfo();
+
+	SetTitle(MapFileFolder + MapFileName);
 
 	return TRUE;
 }
@@ -385,7 +389,14 @@ void CMapEditerDoc::OnOpenNewDoc(CString strFileName)
 
  	GetMonstersInfo();
 
+	SetTitle(MapFileFolder + MapFileName);
+
 	UpdateAllViews(NULL);
+}
+
+void CMapEditerDoc::OnUpdateFileView(CString strDir)
+{
+
 }
 
 void CMapEditerDoc::UpdatePropertiesView(POSITION pos)
@@ -554,4 +565,9 @@ void CMapEditerDoc::OnAlignSelectMonsters(int nType)
 		tmpPos = m_MonsterInfoSel[nInc++];
 	}
 
+}
+
+void CMapEditerDoc::OnUpdateViews()
+{
+	UpdateAllViews(NULL);
 }
